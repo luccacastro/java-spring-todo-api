@@ -151,13 +151,4 @@ To set the CORS, you can use an environment variable. In `application.properties
 app.cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 ```
 
-Then, in the `TaskController`, update the `@CrossOrigin` annotation:
-
-```java
-import org.springframework.beans.factory.annotation.Value;
-
-@CrossOrigin(origins = "${app.cors.allowed-origins}")
-```
-
-This way, you can configure the allowed origins using an environment variable, with a default value if the variable is not set.
 
