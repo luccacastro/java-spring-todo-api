@@ -16,7 +16,7 @@ Each task type has specific attributes and functionalities, which makes the appl
 
 ### Requirements
 
-- Java 17 or higher
+- Java 21 or higher
 - Maven 3.6 or higher
 - Spring Boot 2.5+
 
