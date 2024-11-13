@@ -2,10 +2,7 @@ package com.example.tasklist.controller;
 
 import com.example.tasklist.factory.TaskFactory;
 import com.example.tasklist.dto.TaskDTO;
-import com.example.tasklist.model.DueDateTask;
-import com.example.tasklist.model.StandardTask;
-import com.example.tasklist.model.Task;
-import com.example.tasklist.model.TimedTask;
+import com.example.tasklist.model.*;
 import com.example.tasklist.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,14 +34,12 @@ public class TaskController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getTaskById(@PathVariable Long id) {
-        Task task = taskService.getTaskById(id);
-
-        if (task == null) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("status", "error");
-            errorResponse.put("message", String.format("Task with ID %d not found", id));
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        TaskOrResponse result = getTaskOr404(id);
+        if (!result.hasTask()) {
+            return result.getResponse();
         }
+
+        Task task = result.getTask();
 
         Map<String, Object> successResponse = new HashMap<>();
         successResponse.put("status", "success");
@@ -67,15 +62,24 @@ public class TaskController {
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateTask(@PathVariable Long id, @RequestBody TaskDTO taskDetails) {
+    private TaskOrResponse getTaskOr404(Long id) {
         Task existingTask = taskService.getTaskById(id);
         if (existingTask == null) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("status", "error");
             errorResponse.put("message", String.format("Task with ID %d not found", id));
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            return new TaskOrResponse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse));
         }
+        return new TaskOrResponse(existingTask);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateTask(@PathVariable Long id, @RequestBody TaskDTO taskDetails) {
+        TaskOrResponse result = getTaskOr404(id);
+        if (!result.hasTask()) {
+            return result.getResponse();
+        }
+        Task existingTask = result.getTask();
 
         if (existingTask instanceof StandardTask) {
             ((StandardTask) existingTask).updateFromDTO(taskDetails);
@@ -101,13 +105,9 @@ public class TaskController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable Long id) {
-        Task existingTask = taskService.getTaskById(id);
-
-        if (existingTask == null) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("status", "error");
-            errorResponse.put("message", String.format("Task with ID %d not found", id));
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        TaskOrResponse result = getTaskOr404(id);
+        if (!result.hasTask()) {
+            return result.getResponse();
         }
 
         taskService.deleteTask(id);
